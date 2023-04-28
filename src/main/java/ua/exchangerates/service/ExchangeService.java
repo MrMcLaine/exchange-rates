@@ -1,14 +1,13 @@
 package ua.exchangerates.service;
 
-import ua.exchangerates.domain.ExchangeRate;
+import ua.exchangerates.dto.ExchangeRateDto;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface ExchangeService {
 
-    List<ExchangeRate> getExchangeRates();
+    List<ExchangeRateDto> getExchangeRates();
 
-    List<ExchangeRate> getExchangeRatesForPeriod(LocalDate startDate, LocalDate endDate);
-
+    List<ExchangeRateDto> getAllBetween(LocalDate startDate, LocalDate endDate);
 }

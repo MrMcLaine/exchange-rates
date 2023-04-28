@@ -9,6 +9,7 @@ import java.util.List;
 
 @Repository
 public interface ExchangeRateRepository extends JpaRepository<ExchangeRate, Long> {
-    List<ExchangeRate> findBySourceName(String sourceName);
-    List<ExchangeRate> findBySourceNameAndDateBetween(String sourceName, LocalDate startDate, LocalDate endDate);
+    List<ExchangeRate> findAll();
+
+    List<ExchangeRate> findByDateBetween(LocalDate startDate, LocalDate endDate);
 }

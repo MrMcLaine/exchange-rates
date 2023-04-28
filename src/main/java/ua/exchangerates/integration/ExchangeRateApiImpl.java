@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import ua.exchangerates.domain.ExchangeRate;
-import ua.exchangerates.dto.MinfinExchangeRateDto;
 import ua.exchangerates.dto.MonobankExchangeRateDto;
 import ua.exchangerates.dto.PrivatBankExchangeRateDto;
 import ua.exchangerates.repository.ExchangeRateRepository;
@@ -26,7 +25,6 @@ public class ExchangeRateApiImpl implements ExchangeRateApi {
     private final RestTemplate restTemplate;
     private final ExchangeRateRepository exchangeRateRepository;
     private static final long MIN_TIME_BETWEEN_REQUESTS = 1000; // 1 second
-
 
     public ExchangeRateApiImpl(RestTemplate restTemplate, ExchangeRateRepository exchangeRateRepository) {
         this.restTemplate = restTemplate;
