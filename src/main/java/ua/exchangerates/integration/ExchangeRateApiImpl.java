@@ -1,9 +1,9 @@
 package ua.exchangerates.integration;
 
-import lombok.SneakyThrows;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import ua.exchangerates.domain.ExchangeRate;
 import ua.exchangerates.dto.MonobankExchangeRateDto;
@@ -24,28 +24,21 @@ public class ExchangeRateApiImpl implements ExchangeRateApi {
 
     private final RestTemplate restTemplate;
     private final ExchangeRateRepository exchangeRateRepository;
-    private static final long MIN_TIME_BETWEEN_REQUESTS = 1000; // 1 second
+    private static final long RETRY_DELAY_MS = 5000; // 5 seconds
 
     public ExchangeRateApiImpl(RestTemplate restTemplate, ExchangeRateRepository exchangeRateRepository) {
         this.restTemplate = restTemplate;
         this.exchangeRateRepository = exchangeRateRepository;
     }
 
-    @SneakyThrows
     @Override
     public List<ExchangeRate> getMonoBankExchangeRates() {
         String url = "https://api.monobank.ua/bank/currency";
-
-        long lastRequestTime = System.currentTimeMillis() - MIN_TIME_BETWEEN_REQUESTS; // ensure that first request is sent immediately
-        while (true) {
-            long timeSinceLastRequest = System.currentTimeMillis() - lastRequestTime;
-            if (timeSinceLastRequest < MIN_TIME_BETWEEN_REQUESTS) {
-                Thread.sleep(MIN_TIME_BETWEEN_REQUESTS - timeSinceLastRequest);
-            }
-
-            ResponseEntity<MonobankExchangeRateDto[]> response = restTemplate.getForEntity(url, MonobankExchangeRateDto[].class);
+        try {
+            ResponseEntity<MonobankExchangeRateDto[]> response = restTemplate.getForEntity(url,
+                    MonobankExchangeRateDto[].class);
             if (response.getStatusCode() == HttpStatus.OK) {
-                List<ExchangeRate> exchangeRates = Arrays.stream(response.getBody())
+                List<ExchangeRate> exchangeRates = Arrays.stream(Objects.requireNonNull(response.getBody()))
                         .map(dto -> new ExchangeRate(
                                 null,
                                 dto.getCurrencyCodeA(),
@@ -54,17 +47,23 @@ public class ExchangeRateApiImpl implements ExchangeRateApi {
                                 Instant.ofEpochSecond(dto.getDate()).atZone(ZoneId.systemDefault()).toLocalDate()
                         ))
                         .collect(Collectors.toList());
+                Thread.sleep(10000);
 
                 exchangeRateRepository.saveAll(exchangeRates); // save exchange rates to the database
                 return exchangeRates;
             } else if (response.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                System.out.println("Too many requests. Retrying in " + MIN_TIME_BETWEEN_REQUESTS + " ms...");
-                lastRequestTime = System.currentTimeMillis();
+                System.out.println("Too many requests. Retrying in " + RETRY_DELAY_MS + " ms...");
+                Thread.sleep(RETRY_DELAY_MS);
             } else {
                 throw new RuntimeException("Failed to get exchange rates from Monobank API. Response code: "
                                            + response.getStatusCodeValue());
             }
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted while waiting to retry", e);
+        } catch (HttpClientErrorException e) {
+            System.out.println("Error from UI" + e);
         }
+        throw new RuntimeException("Error in the end");
     }
 
     @Override
@@ -90,7 +89,7 @@ public class ExchangeRateApiImpl implements ExchangeRateApi {
     public List<ExchangeRate> getPrivatBankExchangeRates() {
         String url = "https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11";
         ResponseEntity<PrivatBankExchangeRateDto[]> response = restTemplate.getForEntity(url, PrivatBankExchangeRateDto[].class);
-        List<ExchangeRate> exchangeRates = Arrays.stream(response.getBody())
+        List<ExchangeRate> exchangeRates = Arrays.stream(Objects.requireNonNull(response.getBody()))
                 .map(dto -> new ExchangeRate(
                         null,
                         getCurrencyFromStringName(dto.getCurrency()),
@@ -104,7 +103,7 @@ public class ExchangeRateApiImpl implements ExchangeRateApi {
     }
 
     private static BigDecimal getAverageRate(BigDecimal rateBuy, BigDecimal rateCross, BigDecimal rateSell) {
-        if(!Objects.equals(rateCross, BigDecimal.ZERO)) {
+        if (!Objects.equals(rateCross, BigDecimal.ZERO)) {
             return rateCross;
         } else {
             return rateBuy.add(rateSell).divide(BigDecimal.valueOf(2));
@@ -114,7 +113,7 @@ public class ExchangeRateApiImpl implements ExchangeRateApi {
     private static String getCurrencyFromStringName(String nameCurrency) {
         final String USD_CURRENCY = "840";
         final String EUR_CURRENCY = "978";
-        switch (nameCurrency.toLowerCase()){
+        switch (nameCurrency.toLowerCase()) {
             case "usd":
                 return USD_CURRENCY;
             case "eur":

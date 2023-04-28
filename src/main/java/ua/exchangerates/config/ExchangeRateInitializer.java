@@ -26,7 +26,7 @@ public class ExchangeRateInitializer {
         exchangeRateApi.getPrivatBankExchangeRates();
     }
 
-    @Scheduled(cron = "0 0 * * * *") // run every hour
+    @Scheduled(cron = "0 * * * * ?") // run every 1 minute
     public void syncExchangeRates() {
         // load latest exchange rates from APIs and save to database
         exchangeRateApi.getMonoBankExchangeRates();
