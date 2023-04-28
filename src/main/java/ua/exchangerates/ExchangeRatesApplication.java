@@ -22,13 +22,25 @@ public class ExchangeRatesApplication implements CommandLineRunner {
 	}
 
 	@Override
-	public void run(String... args) throws Exception {
-		ExchangeRate exchangeRate = new ExchangeRate();
-		exchangeRate.setDate(LocalDate.now());
-		exchangeRate.setRate(BigDecimal.valueOf(10.00));
-		exchangeRate.setCurrencyCode("test");
-		exchangeRate.setSourceName("test");
+	public void run(String... args) {
+		ExchangeRate exchangeRate1 = new ExchangeRate("840", "TestBank",
+				new BigDecimal("38.00"), LocalDate.of(2023, 4,27));
+		ExchangeRate exchangeRate2 = new ExchangeRate("978", "TestBank",
+				new BigDecimal("39.50"), LocalDate.of(2023,4,27));
+		ExchangeRate exchangeRate3 = new ExchangeRate("840", "TestBank",
+				new BigDecimal("38.15"), LocalDate.of(2023, 4,26));
+		ExchangeRate exchangeRate4 = new ExchangeRate("978", "TestBank",
+				new BigDecimal("39.80"), LocalDate.of(2023,4,26));
+		ExchangeRate exchangeRate5 = new ExchangeRate("840", "TestBank",
+				new BigDecimal("38.20"), LocalDate.of(2023, 4,25));
+		ExchangeRate exchangeRate6 = new ExchangeRate("978", "TestBank",
+				new BigDecimal("39.50"), LocalDate.of(2023,4,25));
 
-		repository.save(exchangeRate);
+		repository.save(exchangeRate1);
+		repository.save(exchangeRate2);
+		repository.save(exchangeRate3);
+		repository.save(exchangeRate4);
+		repository.save(exchangeRate5);
+		repository.save(exchangeRate6);
 	}
 }
