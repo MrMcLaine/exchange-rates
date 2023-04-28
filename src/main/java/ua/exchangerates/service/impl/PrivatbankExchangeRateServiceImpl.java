@@ -1,5 +1,6 @@
 package ua.exchangerates.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ua.exchangerates.domain.ExchangeRate;
 import ua.exchangerates.repository.ExchangeRateRepository;
@@ -11,10 +12,10 @@ import java.util.List;
 @Service
 public class PrivatbankExchangeRateServiceImpl implements ExchangeService {
 
-    private final ExchangeRateRepository exchangeRateRepository;
+    @Autowired
+    private ExchangeRateRepository exchangeRateRepository;
 
-    public PrivatbankExchangeRateServiceImpl(ExchangeRateRepository exchangeRateRepository) {
-        this.exchangeRateRepository = exchangeRateRepository;
+    public PrivatbankExchangeRateServiceImpl() {
     }
 
     @Override
